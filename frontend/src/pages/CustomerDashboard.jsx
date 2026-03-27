@@ -10,9 +10,11 @@ export default function CustomerDashboard() {
   const [bookings, setBookings] = useState([]);
   const [filters, setFilters] = useState({ type: "", fuel_type: "", max_price: "", seats: "" });
   const [loading, setLoading] = useState(false);
+  const [bookingLoading, setBookingLoading] = useState(false);
+  const [paymentLoadingId, setPaymentLoadingId] = useState(null);
+  const [vehicleSort, setVehicleSort] = useState("recommended");
   const [selectedVehicle, setSelectedVehicle] = useState(null);
   const [bookingForm, setBookingForm] = useState({ start_time: "", end_time: "", coupon_code: "" });
-  const [paymentVehicle, setPaymentVehicle] = useState(null);
   const [msg, setMsg] = useState("");
   const [recommend, setRecommend] = useState({ destination: "Goa", days: 3, people: 2, budget: 8000 });
   const [aiPlan, setAiPlan] = useState(null);
@@ -43,16 +45,23 @@ export default function CustomerDashboard() {
 
   const handleBook = async () => {
     if (!bookingForm.start_time || !bookingForm.end_time) { setMsg("Please select start and end time"); return; }
+    if (new Date(bookingForm.end_time) <= new Date(bookingForm.start_time)) {
+      setMsg("❌ End time must be after start time.");
+      return;
+    }
+    setBookingLoading(true);
     try {
       const data = await apiCall("/bookings", {
         method: "POST",
         body: JSON.stringify({ vehicle_id: selectedVehicle.id, ...bookingForm })
       });
       setMsg(`✅ Booking confirmed! Total: ₹${data.total_cost}. Please pay to confirm.`);
-      setPaymentVehicle(data);
       setSelectedVehicle(null);
+      setBookingForm({ start_time: "", end_time: "", coupon_code: "" });
       fetchBookings();
+      fetchVehicles();
     } catch (e) { setMsg("❌ " + e.message); }
+    finally { setBookingLoading(false); }
   };
 
   const loadRazorpayScript = () => new Promise((resolve) => {
@@ -65,6 +74,7 @@ export default function CustomerDashboard() {
   });
 
   const handlePayment = async (bookingId) => {
+    setPaymentLoadingId(bookingId);
     try {
       const loaded = await loadRazorpayScript();
       if (!loaded) throw new Error("Unable to load Razorpay Checkout");
@@ -98,8 +108,8 @@ export default function CustomerDashboard() {
               })
             });
             setMsg(`✅ Payment successful! Txn: ${verified.transaction_id}`);
-            setPaymentVehicle(null);
             fetchBookings();
+            fetchVehicles();
           } catch (e) {
             setMsg("❌ Payment verification failed: " + e.message);
           }
@@ -113,6 +123,8 @@ export default function CustomerDashboard() {
       rz.open();
     } catch (e) {
       setMsg("❌ " + e.message);
+    } finally {
+      setPaymentLoadingId(null);
     }
   };
 
@@ -121,6 +133,7 @@ export default function CustomerDashboard() {
       const data = await apiCall(`/bookings/${bookingId}/return`, { method: "PUT" });
       setMsg(`✅ Vehicle returned! ${data.late_fee > 0 ? `Late fee: ₹${data.late_fee}` : "No late fee."}`);
       fetchBookings();
+      fetchVehicles();
     } catch (e) { setMsg("❌ " + e.message); }
   };
 
@@ -186,6 +199,25 @@ export default function CustomerDashboard() {
   };
 
   const statusColor = { booked: "#f59e0b", picked_up: "#3b82f6", returned: "#10b981", cancelled: "#ef4444" };
+  const sortedVehicles = [...vehicles].sort((a, b) => {
+    if (vehicleSort === "price_low") return Number(a.price_per_day) - Number(b.price_per_day);
+    if (vehicleSort === "price_high") return Number(b.price_per_day) - Number(a.price_per_day);
+    if (vehicleSort === "rating") return Number(b.rating || 0) - Number(a.rating || 0);
+    return 0;
+  });
+  const pendingPayments = bookings.filter((b) => b.payment_status === "pending" && b.status === "booked").length;
+  const activeTrips = bookings.filter((b) => ["booked", "picked_up"].includes(b.status)).length;
+  const bookingPreview = (() => {
+    if (!selectedVehicle || !bookingForm.start_time || !bookingForm.end_time) return null;
+    const start = new Date(bookingForm.start_time);
+    const end = new Date(bookingForm.end_time);
+    const ms = end - start;
+    if (!Number.isFinite(ms) || ms <= 0) return null;
+    const hours = Math.ceil(ms / (1000 * 60 * 60));
+    const byHour = hours * Number(selectedVehicle.price_per_hour || 0);
+    const byDay = Math.ceil(hours / 24) * Number(selectedVehicle.price_per_day || 0);
+    return { hours, estimatedCost: Math.min(byHour, byDay) };
+  })();
 
   return (
     <div style={{ minHeight: "100vh", background: "linear-gradient(180deg, #eef2ff 0%, #f8fafc 44%, #edf7ff 100%)", fontFamily: "Inter, system-ui, sans-serif" }}>
@@ -214,6 +246,12 @@ export default function CustomerDashboard() {
 
       <div style={{ maxWidth: 1280, margin: "0 auto", padding: 24 }}>
         {msg && <div style={{ background: msg.startsWith("✅") ? "#d1fae5" : "#fee2e2", color: msg.startsWith("✅") ? "#065f46" : "#991b1b", padding: "12px 16px", borderRadius: 8, marginBottom: 16 }}>{msg}<button onClick={() => setMsg("")} style={{ float: "right", border: "none", background: "none", cursor: "pointer" }}>×</button></div>}
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 12, marginBottom: 16 }}>
+          <div style={statCard}><div style={statLabel}>Available Vehicles</div><div style={statValue}>{vehicles.length}</div></div>
+          <div style={statCard}><div style={statLabel}>Active Trips</div><div style={statValue}>{activeTrips}</div></div>
+          <div style={statCard}><div style={statLabel}>Pending Payments</div><div style={statValue}>{pendingPayments}</div></div>
+          <div style={statCard}><div style={statLabel}>Total Bookings</div><div style={statValue}>{bookings.length}</div></div>
+        </div>
 
         {/* BROWSE VEHICLES */}
         {tab === 0 && <>
@@ -239,12 +277,22 @@ export default function CustomerDashboard() {
                 <input type="number" placeholder="Any" value={filters.seats} onChange={e => setFilters({ ...filters, seats: e.target.value })} style={{ ...selStyle, width: 80 }} />
               </div>
               <button onClick={fetchVehicles} style={btnStyle}>Search</button>
+              <button onClick={() => { setFilters({ type: "", fuel_type: "", max_price: "", seats: "" }); setVehicleSort("recommended"); }} style={{ ...btnStyle, background: "#e2e8f0", color: "#0f172a", boxShadow: "none" }}>Clear</button>
+              <div>
+                <div style={{ fontSize: 12, color: "#666", marginBottom: 4 }}>Sort</div>
+                <select value={vehicleSort} onChange={e => setVehicleSort(e.target.value)} style={selStyle}>
+                  <option value="recommended">Recommended</option>
+                  <option value="price_low">Price: Low to High</option>
+                  <option value="price_high">Price: High to Low</option>
+                  <option value="rating">Rating</option>
+                </select>
+              </div>
             </div>
           </div>
 
           {loading ? <div style={{ textAlign: "center", padding: 40, color: "#666" }}>Loading vehicles...</div> : (
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: 20 }}>
-              {vehicles.map(v => (
+              {sortedVehicles.map(v => (
                 <div key={v.id} style={{ background: "white", borderRadius: 12, overflow: "hidden", boxShadow: "0 1px 4px rgba(0,0,0,0.1)" }}>
                   <div style={{ background: "linear-gradient(135deg, #0f3460, #16213e)", height: 120, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 60 }}>
                     {v.type === "car" ? "🚗" : v.type === "bike" ? "🏍️" : "🚐"}
@@ -289,7 +337,9 @@ export default function CustomerDashboard() {
                 <div style={{ display: "flex", gap: 8 }}>
                   {b.payment_status === "pending" && b.status === "booked" && (
                     <div style={{ display: "flex", gap: 8 }}>
-                      <button onClick={() => handlePayment(b.id)} style={{ ...btnSmall, background: "#10b981" }}>Pay Now</button>
+                      <button onClick={() => handlePayment(b.id)} disabled={paymentLoadingId === b.id} style={{ ...btnSmall, background: "#10b981", opacity: paymentLoadingId === b.id ? 0.7 : 1 }}>
+                        {paymentLoadingId === b.id ? "Processing..." : "Pay Now"}
+                      </button>
                     </div>
                   )}
                   {b.status === "picked_up" && (
@@ -354,10 +404,11 @@ export default function CustomerDashboard() {
             <input type="datetime-local" value={bookingForm.start_time} onChange={e => setBookingForm({ ...bookingForm, start_time: e.target.value })} style={{ ...selStyle, display: "block", width: "100%", marginBottom: 12, marginTop: 4 }} />
             <label style={{ fontSize: 13, color: "#444" }}>End Date & Time</label>
             <input type="datetime-local" value={bookingForm.end_time} onChange={e => setBookingForm({ ...bookingForm, end_time: e.target.value })} style={{ ...selStyle, display: "block", width: "100%", marginBottom: 12, marginTop: 4 }} />
+            {bookingPreview && <div style={{ background: "#f8fafc", border: "1px solid #e2e8f0", padding: "10px 12px", borderRadius: 8, marginBottom: 12, fontSize: 13, color: "#334155" }}>Estimated duration: {bookingPreview.hours} hour(s) • Estimated total: ₹{bookingPreview.estimatedCost}</div>}
             <label style={{ fontSize: 13, color: "#444" }}>Coupon Code (optional)</label>
             <input placeholder="e.g. WELCOME10 or FLAT200" value={bookingForm.coupon_code} onChange={e => setBookingForm({ ...bookingForm, coupon_code: e.target.value })} style={{ ...selStyle, display: "block", width: "100%", marginBottom: 20, marginTop: 4 }} />
             <div style={{ display: "flex", gap: 12 }}>
-              <button onClick={handleBook} style={{ ...btnStyle, flex: 1 }}>Confirm Booking</button>
+              <button onClick={handleBook} disabled={bookingLoading} style={{ ...btnStyle, flex: 1, opacity: bookingLoading ? 0.7 : 1 }}>{bookingLoading ? "Booking..." : "Confirm Booking"}</button>
               <button onClick={() => setSelectedVehicle(null)} style={{ flex: 1, padding: "10px", border: "1px solid #ddd", borderRadius: 8, cursor: "pointer", background: "white" }}>Cancel</button>
             </div>
           </div>
@@ -370,3 +421,6 @@ export default function CustomerDashboard() {
 const selStyle = { padding: "9px 12px", border: "1px solid #d8e1ef", borderRadius: 10, fontSize: 14, outline: "none", background: "rgba(255,255,255,0.96)", boxShadow: "0 2px 8px rgba(15,23,42,0.04)" };
 const btnStyle = { padding: "10px 20px", background: "linear-gradient(135deg, #2563eb, #4f46e5)", color: "white", border: "none", borderRadius: 10, cursor: "pointer", fontWeight: 700, fontSize: 14, boxShadow: "0 8px 20px rgba(37,99,235,0.3)" };
 const btnSmall = { padding: "7px 12px", background: "linear-gradient(135deg, #1d4ed8, #4338ca)", color: "white", border: "none", borderRadius: 8, cursor: "pointer", fontSize: 13, fontWeight: 600 };
+const statCard = { background: "rgba(255,255,255,0.9)", border: "1px solid #dbeafe", borderRadius: 12, padding: "12px 14px", boxShadow: "0 1px 4px rgba(0,0,0,0.08)" };
+const statLabel = { fontSize: 12, color: "#64748b" };
+const statValue = { fontSize: 24, fontWeight: 700, color: "#1e293b", marginTop: 2 };
