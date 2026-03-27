@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useAuth } from "../App";
 
 export default function Auth() {
-  const { login } = useAuth();
+  const { login, apiCall } = useAuth();
   const [isLogin, setIsLogin] = useState(true);
   const [form, setForm] = useState({ name: "", email: "", password: "", role: "customer", license_number: "" });
   const [error, setError] = useState("");
@@ -14,12 +14,10 @@ export default function Auth() {
     try {
       const endpoint = isLogin ? "/auth/login" : "/auth/signup";
       const body = isLogin ? { email: form.email, password: form.password } : form;
-      const res = await fetch(`http://localhost:8000${endpoint}`, {
-        method: "POST", headers: { "Content-Type": "application/json" },
+      const data = await apiCall(endpoint, {
+        method: "POST",
         body: JSON.stringify(body)
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.detail || "Failed");
       login(data.user, data.access_token);
     } catch (err) {
       setError(err.message);
@@ -32,12 +30,10 @@ export default function Auth() {
     setForm({ ...form, email, password });
     setError(""); setLoading(true);
     try {
-      const res = await fetch("http://localhost:8000/auth/login", {
-        method: "POST", headers: { "Content-Type": "application/json" },
+      const data = await apiCall("/auth/login", {
+        method: "POST",
         body: JSON.stringify({ email, password })
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.detail || "Failed");
       login(data.user, data.access_token);
     } catch (err) {
       setError(err.message);
