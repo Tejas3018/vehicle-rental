@@ -11,6 +11,8 @@ export default function AdminDashboard() {
   const [msg, setMsg] = useState("");
   const [vehicleForm, setVehicleForm] = useState({ type: "car", brand: "", model: "", fuel_type: "petrol", seating_capacity: 5, price_per_hour: "", price_per_day: "", registration_number: "", city: "Mumbai" });
   const [ruleForm, setRuleForm] = useState({ rule_type: "weekend", name: "", value: "", is_percentage: true, conditions: {} });
+  const [vehicleSearch, setVehicleSearch] = useState("");
+  const [bookingStatusFilter, setBookingStatusFilter] = useState("all");
 
   useEffect(() => { fetchAll(); }, []);
 
@@ -73,6 +75,14 @@ export default function AdminDashboard() {
 
   const TABS = ["📊 Dashboard", "🚗 Vehicles", "📅 All Bookings", "💰 Pricing Rules"];
   const statusColors = { available: "#10b981", booked: "#f59e0b", maintenance: "#ef4444" };
+
+  const filteredVehicles = vehicles.filter(v => {
+    const q = vehicleSearch.trim().toLowerCase();
+    if (!q) return true;
+    return `${v.brand} ${v.model} ${v.registration_number || ""} ${v.city || ""}`.toLowerCase().includes(q);
+  });
+
+  const filteredBookings = bookings.filter(b => bookingStatusFilter === "all" || b.status === bookingStatusFilter);
 
   return (
     <div style={{ minHeight: "100vh", background: "linear-gradient(180deg, #eef2ff 0%, #f8fafc 45%, #f1f5f9 100%)", fontFamily: "Inter, system-ui, sans-serif" }}>
@@ -156,8 +166,12 @@ export default function AdminDashboard() {
             <button onClick={addVehicle} style={{ marginTop: 16, ...btnS }}>+ Add Vehicle</button>
           </div>
 
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12, gap: 10, flexWrap: "wrap" }}>
+            <input placeholder="Search vehicle, reg no, city..." value={vehicleSearch} onChange={e => setVehicleSearch(e.target.value)} style={{ ...selS, minWidth: 260 }} />
+            <div style={{ color: "#64748b", fontSize: 13 }}>Showing {filteredVehicles.length} of {vehicles.length} vehicles</div>
+          </div>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 16 }}>
-            {vehicles.map(v => (
+            {filteredVehicles.map(v => (
               <div key={v.id} style={{ background: "white", borderRadius: 12, padding: 16, boxShadow: "0 1px 4px rgba(0,0,0,0.1)" }}>
                 <div style={{ display: "flex", justifyContent: "space-between" }}>
                   <div style={{ fontWeight: 700 }}>{v.brand} {v.model}</div>
@@ -173,7 +187,16 @@ export default function AdminDashboard() {
         </>}
 
         {tab === 2 && <div>
-          <h2 style={{ margin: "0 0 20px" }}>All Bookings ({bookings.length})</h2>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16, gap: 10, flexWrap: "wrap" }}>
+            <h2 style={{ margin: 0 }}>All Bookings ({filteredBookings.length})</h2>
+            <select value={bookingStatusFilter} onChange={e => setBookingStatusFilter(e.target.value)} style={selS}>
+              <option value="all">All Statuses</option>
+              <option value="booked">Booked</option>
+              <option value="picked_up">Picked Up</option>
+              <option value="returned">Returned</option>
+              <option value="cancelled">Cancelled</option>
+            </select>
+          </div>
           <div style={{ background: "white", borderRadius: 12, overflow: "hidden", boxShadow: "0 1px 4px rgba(0,0,0,0.1)" }}>
             <table style={{ width: "100%", borderCollapse: "collapse" }}>
               <thead><tr style={{ background: "#f9fafb" }}>
@@ -182,7 +205,7 @@ export default function AdminDashboard() {
                 ))}
               </tr></thead>
               <tbody>
-                {bookings.map(b => (
+                {filteredBookings.map(b => (
                   <tr key={b.id} style={{ borderTop: "1px solid #f3f4f6" }}>
                     <td style={td}>#{b.id}</td>
                     <td style={td}>#{b.user_id}</td>

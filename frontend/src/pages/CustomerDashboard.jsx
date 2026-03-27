@@ -17,6 +17,8 @@ export default function CustomerDashboard() {
   const [recommend, setRecommend] = useState({ destination: "Goa", days: 3, people: 2, budget: 8000 });
   const [aiPlan, setAiPlan] = useState(null);
   const [aiLoading, setAiLoading] = useState(false);
+  const [vehicleSearch, setVehicleSearch] = useState("");
+  const [vehicleSort, setVehicleSort] = useState("smart");
 
   useEffect(() => { fetchVehicles(); fetchBookings(); }, []);
 
@@ -187,6 +189,19 @@ export default function CustomerDashboard() {
 
   const statusColor = { booked: "#f59e0b", picked_up: "#3b82f6", returned: "#10b981", cancelled: "#ef4444" };
 
+  const displayedVehicles = [...vehicles]
+    .filter(v => {
+      const q = vehicleSearch.trim().toLowerCase();
+      if (!q) return true;
+      return `${v.brand} ${v.model} ${v.type} ${v.fuel_type} ${v.city || ""}`.toLowerCase().includes(q);
+    })
+    .sort((a, b) => {
+      if (vehicleSort === "price_low") return a.price_per_day - b.price_per_day;
+      if (vehicleSort === "price_high") return b.price_per_day - a.price_per_day;
+      if (vehicleSort === "rating") return (b.rating || 0) - (a.rating || 0);
+      return 0;
+    });
+
   return (
     <div style={{ minHeight: "100vh", background: "linear-gradient(180deg, #eef2ff 0%, #f8fafc 44%, #edf7ff 100%)", fontFamily: "Inter, system-ui, sans-serif" }}>
       {/* Header */}
@@ -238,13 +253,27 @@ export default function CustomerDashboard() {
                 <div style={{ fontSize: 12, color: "#666", marginBottom: 4 }}>Min Seats</div>
                 <input type="number" placeholder="Any" value={filters.seats} onChange={e => setFilters({ ...filters, seats: e.target.value })} style={{ ...selStyle, width: 80 }} />
               </div>
-              <button onClick={fetchVehicles} style={btnStyle}>Search</button>
+              <div>
+                <div style={{ fontSize: 12, color: "#666", marginBottom: 4 }}>Quick Search</div>
+                <input placeholder="Brand, model, fuel..." value={vehicleSearch} onChange={e => setVehicleSearch(e.target.value)} style={{ ...selStyle, width: 180 }} />
+              </div>
+              <div>
+                <div style={{ fontSize: 12, color: "#666", marginBottom: 4 }}>Sort By</div>
+                <select value={vehicleSort} onChange={e => setVehicleSort(e.target.value)} style={{ ...selStyle, width: 150 }}>
+                  <option value="smart">Smart Match</option>
+                  <option value="price_low">Price: Low to High</option>
+                  <option value="price_high">Price: High to Low</option>
+                  <option value="rating">Top Rated</option>
+                </select>
+              </div>
+              <button onClick={fetchVehicles} style={btnStyle}>Refresh</button>
             </div>
           </div>
 
+          {!loading && <div style={{ marginBottom: 12, fontSize: 13, color: "#475569" }}>Showing {displayedVehicles.length} of {vehicles.length} vehicles</div>}
           {loading ? <div style={{ textAlign: "center", padding: 40, color: "#666" }}>Loading vehicles...</div> : (
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: 20 }}>
-              {vehicles.map(v => (
+              {displayedVehicles.map(v => (
                 <div key={v.id} style={{ background: "white", borderRadius: 12, overflow: "hidden", boxShadow: "0 1px 4px rgba(0,0,0,0.1)" }}>
                   <div style={{ background: "linear-gradient(135deg, #0f3460, #16213e)", height: 120, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 60 }}>
                     {v.type === "car" ? "🚗" : v.type === "bike" ? "🏍️" : "🚐"}
@@ -260,7 +289,7 @@ export default function CustomerDashboard() {
                   </div>
                 </div>
               ))}
-              {vehicles.length === 0 && <div style={{ gridColumn: "1/-1", textAlign: "center", padding: 40, color: "#888" }}>No vehicles found with current filters.</div>}
+              {displayedVehicles.length === 0 && <div style={{ gridColumn: "1/-1", textAlign: "center", padding: 40, color: "#888" }}>No vehicles found. Try changing filters or search text.</div>}
             </div>
           )}
         </>}

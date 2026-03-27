@@ -8,6 +8,9 @@ export default function FleetDashboard() {
   const [maintenance, setMaintenance] = useState([]);
   const [msg, setMsg] = useState("");
   const [maintForm, setMaintForm] = useState({ vehicle_id: "", maintenance_type: "", description: "", cost: "", next_due_date: "" });
+  const [vehicleSearch, setVehicleSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [maintTypeFilter, setMaintTypeFilter] = useState("all");
 
   useEffect(() => { fetchAll(); }, []);
 
@@ -44,6 +47,15 @@ export default function FleetDashboard() {
   const statusColors = { available: "#10b981", booked: "#f59e0b", maintenance: "#ef4444" };
   const TABS = ["🚗 Vehicle Status", "🔧 Log Maintenance", "📋 Maintenance History"];
 
+  const filteredVehicles = vehicles.filter(v => {
+    if (statusFilter !== "all" && v.status !== statusFilter) return false;
+    const q = vehicleSearch.trim().toLowerCase();
+    if (!q) return true;
+    return `${v.brand} ${v.model} ${v.registration_number || ""} ${v.city || ""}`.toLowerCase().includes(q);
+  });
+
+  const filteredMaintenance = maintenance.filter(m => maintTypeFilter === "all" || (m.type || "") === maintTypeFilter);
+
   return (
     <div style={{ minHeight: "100vh", background: "linear-gradient(180deg, #ecfdf5 0%, #f8fafc 40%, #f1f5f9 100%)", fontFamily: "Inter, system-ui, sans-serif" }}>
       <div style={{ background: "linear-gradient(120deg, #065f46, #0f766e)", color: "white", padding: "16px 24px", display: "flex", justifyContent: "space-between", alignItems: "center", boxShadow: "0 10px 24px rgba(6,95,70,0.25)" }}>
@@ -76,8 +88,18 @@ export default function FleetDashboard() {
               );
             })}
           </div>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12, gap: 10, flexWrap: "wrap" }}>
+            <input placeholder="Search by brand, reg no, city..." value={vehicleSearch} onChange={e => setVehicleSearch(e.target.value)} style={{ ...inp, minWidth: 260, width: "auto" }} />
+            <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)} style={{ ...inp, minWidth: 170, width: "auto" }}>
+              <option value="all">All Statuses</option>
+              <option value="available">Available</option>
+              <option value="booked">Booked</option>
+              <option value="maintenance">Maintenance</option>
+            </select>
+            <div style={{ color: "#64748b", fontSize: 13 }}>Showing {filteredVehicles.length} of {vehicles.length}</div>
+          </div>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: 16 }}>
-            {vehicles.map(v => (
+            {filteredVehicles.map(v => (
               <div key={v.id} style={{ background: "rgba(255,255,255,0.96)", borderRadius: 18, padding: 16, boxShadow: "0 14px 30px rgba(15,23,42,0.1)", border: "1px solid #d9e7df" }}>
                 <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
                   <div>
@@ -143,10 +165,16 @@ export default function FleetDashboard() {
         {/* Maintenance History */}
         {tab === 2 && (
           <div>
-            <h2 style={{ margin: "0 0 20px" }}>Maintenance History ({maintenance.length} records)</h2>
-            {maintenance.length === 0 ? <div style={{ textAlign: "center", padding: 60, color: "#888" }}>No maintenance records yet.</div> : (
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16, gap: 10, flexWrap: "wrap" }}>
+              <h2 style={{ margin: 0 }}>Maintenance History ({filteredMaintenance.length} records)</h2>
+              <select value={maintTypeFilter} onChange={e => setMaintTypeFilter(e.target.value)} style={{ ...inp, minWidth: 200, width: "auto" }}>
+                <option value="all">All Types</option>
+                {[...new Set(maintenance.map(m => m.type).filter(Boolean))].map(t => <option key={t} value={t}>{t}</option>)}
+              </select>
+            </div>
+            {filteredMaintenance.length === 0 ? <div style={{ textAlign: "center", padding: 60, color: "#888" }}>No maintenance records found for selected filter.</div> : (
               <div style={{ display: "grid", gap: 12 }}>
-                {maintenance.map(m => (
+                {filteredMaintenance.map(m => (
                   <div key={m.id} style={{ background: "white", borderRadius: 12, padding: 16, boxShadow: "0 1px 4px rgba(0,0,0,0.1)", display: "flex", justifyContent: "space-between" }}>
                     <div>
                       <div style={{ fontWeight: 700 }}>Vehicle #{m.vehicle_id} — {m.type}</div>
