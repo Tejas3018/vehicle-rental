@@ -1,25 +1,45 @@
 import { useState } from "react";
-import { useAuth } from "../App";
+import { useAuth, API_BASE } from "../App";
 
 export default function Auth() {
   const { login } = useAuth();
   const [isLogin, setIsLogin] = useState(true);
+  const [showPassword, setShowPassword] = useState(false);
   const [form, setForm] = useState({ name: "", email: "", password: "", role: "customer", license_number: "" });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError(""); setLoading(true);
+    setError("");
+
+    if (!form.email || !form.password) {
+      setError("Email and password are required.");
+      return;
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) {
+      setError("Please enter a valid email address.");
+      return;
+    }
+    if (form.password.length < 6) {
+      setError("Password must be at least 6 characters long.");
+      return;
+    }
+    if (!isLogin && form.role === "customer" && !form.license_number) {
+      setError("Driving license number is required for customers.");
+      return;
+    }
+
+    setLoading(true);
     try {
       const endpoint = isLogin ? "/auth/login" : "/auth/signup";
       const body = isLogin ? { email: form.email, password: form.password } : form;
-      const res = await fetch(`http://localhost:8000${endpoint}`, {
+      const res = await fetch(`${API_BASE}${endpoint}`, {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body)
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.detail || "Failed");
+      if (!res.ok) throw new Error(data.detail || "Request failed");
       login(data.user, data.access_token);
     } catch (err) {
       setError(err.message);
@@ -30,14 +50,15 @@ export default function Auth() {
 
   const demoLogin = async (email, password) => {
     setForm({ ...form, email, password });
-    setError(""); setLoading(true);
+    setError("");
+    setLoading(true);
     try {
-      const res = await fetch("http://localhost:8000/auth/login", {
+      const res = await fetch(`${API_BASE}/auth/login`, {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password })
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.detail || "Failed");
+      if (!res.ok) throw new Error(data.detail || "Request failed");
       login(data.user, data.access_token);
     } catch (err) {
       setError(err.message);
@@ -57,7 +78,12 @@ export default function Auth() {
 
         <div style={{ display: "flex", marginBottom: 24, background: "#eef2ff", borderRadius: 12, padding: 4 }}>
           {["Login", "Sign Up"].map((t, i) => (
-            <button key={t} onClick={() => setIsLogin(i === 0)} style={{
+            <button key={t} onClick={() => {
+              setIsLogin(i === 0);
+              setError("");
+              setShowPassword(false);
+              setForm({ name: "", email: "", password: "", role: "customer", license_number: "" });
+            }} style={{
               flex: 1, padding: "8px 0", border: "none", borderRadius: 6, cursor: "pointer",
               background: (i === 0) === isLogin ? "white" : "transparent",
               fontWeight: (i === 0) === isLogin ? 700 : 500,
@@ -83,8 +109,16 @@ export default function Auth() {
           </>}
           <input type="email" placeholder="Email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })}
             required style={inputStyle} />
-          <input type="password" placeholder="Password" value={form.password} onChange={e => setForm({ ...form, password: e.target.value })}
-            required style={inputStyle} />
+          <div style={{ position: "relative", marginBottom: 12 }}>
+            <input type={showPassword ? "text" : "password"} placeholder="Password" value={form.password}
+              onChange={e => setForm({ ...form, password: e.target.value })} required style={{ ...inputStyle, paddingRight: 90 }} />
+            <button type="button" onClick={() => setShowPassword(!showPassword)} style={{
+              position: "absolute", right: 10, top: 8, border: "none", background: "transparent", cursor: "pointer",
+              color: "#3b82f6", padding: "6px 8px", fontSize: 12, fontWeight: 600
+            }}>
+              {showPassword ? "Hide" : "Show"}
+            </button>
+          </div>
           {error && <div style={{ color: "red", fontSize: 14, marginBottom: 12 }}>{error}</div>}
           <button type="submit" disabled={loading} style={{
             width: "100%", padding: "12px", background: "linear-gradient(135deg, #2563eb, #7c3aed)", color: "white",
