@@ -1,6 +1,6 @@
 # 🚗 VehicleRent Pro — Vehicle Rental Management Platform
 
-A full-stack vehicle rental platform built with **FastAPI + React + SQLite**, featuring an **AI-powered recommendation engine**.
+A full-stack vehicle rental platform built with **FastAPI + React + SQLite**, featuring an **AI-powered travel + vehicle recommendation engine** with day-wise itinerary generation.
 
 ---
 
@@ -50,7 +50,7 @@ vehicle-rental/
 | Database  | SQLite via SQLAlchemy ORM         |
 | Auth      | JWT (python-jose + bcrypt)        |
 | Frontend  | React 18 + Vite                   |
-| AI Engine | Rule-based weighted scoring       |
+| AI Engine | Rule-based + OpenAI itinerary planner |
 | Images    | Static file serving (FastAPI)     |
 
 ---
@@ -145,6 +145,7 @@ PricingRules ──────────────────────�
 | PUT    | /vehicles/{id}                   | Admin/Fleet       |
 | DELETE | /vehicles/{id}                   | Admin             |
 | GET    | /vehicles/recommend              | All               |
+| POST   | /vehicles/ai-recommend           | All               |
 | GET    | /vehicles/{id}/availability      | All               |
 | POST   | /vehicles/{id}/upload-image      | Admin/Fleet       |
 
@@ -161,9 +162,11 @@ PricingRules ──────────────────────�
 | DELETE | /bookings/{id}/cancel            | Customer/Admin    |
 
 ### Payments
-| Method | Endpoint               | Access   |
-|--------|------------------------|----------|
-| POST   | /payments/simulate     | Customer |
+| Method | Endpoint                 | Access      |
+|--------|--------------------------|-------------|
+| POST   | /payments/create-order   | Customer    |
+| POST   | /payments/verify         | Customer    |
+| POST   | /payments/webhook        | Razorpay    |
 
 ### Maintenance
 | Method | Endpoint                     | Access       |
@@ -189,22 +192,48 @@ PricingRules ──────────────────────�
 
 ## 🤖 AI Recommendation Engine
 
-The recommendation engine scores vehicles based on:
+The platform now supports two recommendation modes:
 
+1. **Score-based recommender** (fast deterministic ranking)
 ```
 score = budget_fit (0-30) + seat_match (0-25) + trip_type_match (0-25)
       + fuel_efficiency (0-10) + rating (0-10)
 ```
-
-**Trip Types:**
-- `city` → Prefers bikes and electric/CNG cars
-- `highway` → Prefers diesel cars with high efficiency
-- `long_trip` → Prefers vans and 7-seater SUVs
-
-**Usage:**
+Usage:
 ```
 GET /vehicles/recommend?budget=2000&passengers=2&trip_type=city&duration_hours=24
 ```
+
+2. **OpenAI trip planner with itinerary**
+- Returns best vehicle type, specific vehicle example, reason, estimated cost, fuel type, and day-wise itinerary.
+- Enforces budget-safe output and realistic India-focused recommendations.
+
+Usage:
+```
+POST /vehicles/ai-recommend
+Content-Type: application/json
+
+{
+  "destination": "Goa",
+  "days": 3,
+  "people": 2,
+  "budget": 8000
+}
+```
+
+Response shape:
+```
+{
+  "vehicle_type": "",
+  "vehicle_example": "",
+  "reason": "",
+  "estimated_cost": 0,
+  "fuel_type": "",
+  "itinerary": ["", "", ""]
+}
+```
+
+> Required backend env: `OPENAI_API_KEY`
 
 ---
 
