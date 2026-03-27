@@ -6,7 +6,8 @@ passlib[bcrypt]==1.7.4
 python-multipart==0.0.9
 aiofiles==23.2.1
 pydantic[email]==2.7.1
-scikit-learn==1.4.2
+# scikit-learn is optional for this project; remove to avoid Mac arm64 build issues.
+# scikit-learn==1.4.2
 numpy==1.26.4
 python-dotenv==1.0.1
 razorpay==1.4.2

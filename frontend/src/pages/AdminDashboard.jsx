@@ -1,11 +1,13 @@
 import { useState, useEffect } from "react";
-import { useAuth } from "../App";
+import { useAuth, API_BASE } from "../App";
 
 export default function AdminDashboard() {
-  const { user, logout, apiCall } = useAuth();
+  const { user, logout, apiCall, token } = useAuth();
   const [tab, setTab] = useState(0);
   const [stats, setStats] = useState(null);
   const [vehicles, setVehicles] = useState([]);
+  const [imageUploads, setImageUploads] = useState({});
+  const [uploading, setUploading] = useState(false);
   const [bookings, setBookings] = useState([]);
   const [pricingRules, setPricingRules] = useState([]);
   const [msg, setMsg] = useState("");
@@ -60,6 +62,50 @@ export default function AdminDashboard() {
       setMsg("✅ Rule removed");
       fetchAll();
     } catch (e) { setMsg("❌ " + e.message); }
+  };
+
+  const getVehicleImage = (vehicle) => {
+    if (vehicle.images && vehicle.images.length > 0) {
+      return vehicle.images[0].startsWith("http") ? vehicle.images[0] : `${API_BASE}${vehicle.images[0]}`;
+    }
+    return "https://via.placeholder.com/300x150?text=No+Image";
+  };
+
+  const handleImageChange = (vehicleId, file) => {
+    setImageUploads((prev) => ({ ...prev, [vehicleId]: file }));
+  };
+
+  const uploadVehicleImage = async (vehicleId) => {
+    const file = imageUploads[vehicleId];
+    if (!file) {
+      setMsg("❌ Please select an image before upload.");
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+    try {
+      setUploading(true);
+      const res = await fetch(`${API_BASE}/vehicles/${vehicleId}/upload-image`, {
+        method: "POST",
+        headers: {
+          Authorization: token ? `Bearer ${token}` : ""
+        },
+        body: formData
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ detail: "Upload failed" }));
+        throw new Error(err.detail || "Image upload failed");
+      }
+      setMsg("✅ Image uploaded successfully");
+      setImageUploads((prev) => ({ ...prev, [vehicleId]: null }));
+      fetchAll();
+    } catch (e) {
+      setMsg("❌ " + e.message);
+    } finally {
+      setUploading(false);
+    }
   };
 
   const statCards = stats ? [
@@ -159,6 +205,7 @@ export default function AdminDashboard() {
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 16 }}>
             {vehicles.map(v => (
               <div key={v.id} style={{ background: "white", borderRadius: 12, padding: 16, boxShadow: "0 1px 4px rgba(0,0,0,0.1)" }}>
+                <img src={getVehicleImage(v)} style={{ width: "100%", borderRadius: 10, objectFit: "cover", height: 140, marginBottom: 10 }} alt={`${v.brand} ${v.model}`} />
                 <div style={{ display: "flex", justifyContent: "space-between" }}>
                   <div style={{ fontWeight: 700 }}>{v.brand} {v.model}</div>
                   <span style={{ background: statusColors[v.status] + "22", color: statusColors[v.status], padding: "2px 10px", borderRadius: 12, fontSize: 12 }}>{v.status}</span>
@@ -166,6 +213,10 @@ export default function AdminDashboard() {
                 <div style={{ color: "#666", fontSize: 13, margin: "6px 0" }}>{v.type} • {v.fuel_type} • {v.seating_capacity} seats</div>
                 <div style={{ fontSize: 13 }}>₹{v.price_per_hour}/hr • ₹{v.price_per_day}/day</div>
                 <div style={{ color: "#888", fontSize: 12, marginTop: 4 }}>Reg: {v.registration_number} | {v.city}</div>
+                <div style={{ marginTop: 12, display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+                  <input type="file" accept="image/*" onChange={(e) => handleImageChange(v.id, e.target.files?.[0])} style={{ flex: 1 }} />
+                  <button onClick={() => uploadVehicleImage(v.id)} disabled={uploading || !imageUploads[v.id]} style={{ padding: "8px 14px", background: "#2563eb", color: "white", border: "none", borderRadius: 6, cursor: uploading ? "not-allowed" : "pointer", fontSize: 13 }}>Upload</button>
+                </div>
                 <button onClick={() => deleteVehicle(v.id)} style={{ marginTop: 12, padding: "6px 12px", background: "#fee2e2", color: "#ef4444", border: "none", borderRadius: 6, cursor: "pointer", fontSize: 13 }}>Remove</button>
               </div>
             ))}
