@@ -235,37 +235,3 @@ BOOKED → [Pay] → BOOKED (paid) → [Pickup] → PICKED_UP → [Return] → R
 BOOKED/PICKED_UP → [Cancel] → CANCELLED
 ```
 
----
-
-## 🎯 Sprint Deliverables Checklist
-
-### Sprint 1 — System Design ✅
-- [x] Roles defined: Admin, Customer, Fleet Manager
-- [x] Full API endpoint list
-- [x] Database ER schema designed
-- [x] UI screens planned
-
-### Sprint 2 — Backend Development ✅
-- [x] FastAPI backend complete
-- [x] SQLite + SQLAlchemy integration
-- [x] All CRUD + validation logic
-- [x] End-to-end booking flow
-- [x] Pricing engine
-- [x] AI recommendation engine
-
-### Sprint 3 — Frontend & Integration ✅
-- [x] Vehicle listing with filters
-- [x] Booking form + payment simulation
-- [x] My Rentals tracking page
-- [x] Admin dashboard
-- [x] Fleet maintenance dashboard
-- [x] AI recommendation UI
-
----
-
-## 🔒 Security Notes
-
-- Passwords hashed with bcrypt
-- JWT tokens expire after 24 hours
-- Role-based access control on all sensitive endpoints
-- CORS configured (set specific origins in production)
