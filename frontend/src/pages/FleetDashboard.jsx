@@ -54,13 +54,13 @@ export default function FleetDashboard() {
         <button onClick={logout} style={{ background: "rgba(255,255,255,0.15)", border: "none", color: "white", padding: "8px 16px", borderRadius: 8, cursor: "pointer" }}>Logout</button>
       </div>
 
-      <div style={{ background: "rgba(255,255,255,0.84)", borderBottom: "1px solid #dbe3ea", display: "flex", paddingLeft: 24, backdropFilter: "blur(8px)" }}>
+      <div style={{ background: "rgba(255,255,255,0.86)", borderBottom: "1px solid #dbe3ea", display: "flex", paddingLeft: 24, backdropFilter: "blur(10px)", position: "sticky", top: 0, zIndex: 10 }}>
         {TABS.map((t, i) => (
           <button key={t} onClick={() => setTab(i)} style={{ padding: "14px 20px", border: "none", background: "none", cursor: "pointer", borderBottom: tab === i ? "3px solid #0f766e" : "3px solid transparent", color: tab === i ? "#065f46" : "#64748b", fontWeight: tab === i ? 700 : 500, fontSize: 14 }}>{t}</button>
         ))}
       </div>
 
-      <div style={{ maxWidth: 1100, margin: "0 auto", padding: 24 }}>
+      <div style={{ maxWidth: 1220, margin: "0 auto", padding: 24 }}>
         {msg && <div style={{ background: msg.startsWith("✅") ? "#d1fae5" : "#fee2e2", color: msg.startsWith("✅") ? "#065f46" : "#991b1b", padding: "12px 16px", borderRadius: 8, marginBottom: 16 }}>{msg}<button onClick={() => setMsg("")} style={{ float: "right", border: "none", background: "none", cursor: "pointer" }}>×</button></div>}
 
         {/* Vehicle Status */}
@@ -69,7 +69,7 @@ export default function FleetDashboard() {
             {["available", "booked", "maintenance"].map(s => {
               const count = vehicles.filter(v => v.status === s).length;
               return (
-                <div key={s} style={{ background: "rgba(255,255,255,0.93)", borderRadius: 16, padding: "16px 24px", boxShadow: "0 10px 24px rgba(15,23,42,0.08)", border: "1px solid #d9e7df", borderLeft: `4px solid ${statusColors[s]}` }}>
+                <div key={s} style={{ background: "linear-gradient(180deg, rgba(255,255,255,0.96), rgba(248,250,252,0.95))", borderRadius: 18, padding: "16px 24px", boxShadow: "0 14px 30px rgba(15,23,42,0.1)", border: "1px solid #d9e7df", borderLeft: `4px solid ${statusColors[s]}` }}>
                   <div style={{ fontSize: 28, fontWeight: 700, color: statusColors[s] }}>{count}</div>
                   <div style={{ color: "#666", fontSize: 14, textTransform: "capitalize" }}>{s}</div>
                 </div>
@@ -78,7 +78,7 @@ export default function FleetDashboard() {
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: 16 }}>
             {vehicles.map(v => (
-              <div key={v.id} style={{ background: "rgba(255,255,255,0.94)", borderRadius: 16, padding: 16, boxShadow: "0 10px 24px rgba(15,23,42,0.08)", border: "1px solid #d9e7df" }}>
+              <div key={v.id} style={{ background: "rgba(255,255,255,0.96)", borderRadius: 18, padding: 16, boxShadow: "0 14px 30px rgba(15,23,42,0.1)", border: "1px solid #d9e7df" }}>
                 <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
                   <div>
                     <div style={{ fontWeight: 700 }}>{v.brand} {v.model}</div>
@@ -104,7 +104,7 @@ export default function FleetDashboard() {
 
         {/* Log Maintenance */}
         {tab === 1 && (
-          <div style={{ background: "rgba(255,255,255,0.95)", borderRadius: 16, padding: 24, maxWidth: 600, boxShadow: "0 10px 24px rgba(15,23,42,0.08)", border: "1px solid #d9e7df" }}>
+          <div style={{ background: "rgba(255,255,255,0.97)", borderRadius: 18, padding: 24, maxWidth: 640, boxShadow: "0 14px 30px rgba(15,23,42,0.1)", border: "1px solid #d9e7df" }}>
             <h2 style={{ margin: "0 0 20px" }}>Log Maintenance Event</h2>
             <div style={{ display: "grid", gap: 14 }}>
               <div>
@@ -168,4 +168,4 @@ export default function FleetDashboard() {
 }
 
 const lbl = { fontSize: 13, color: "#334155", fontWeight: 600, display: "block", marginBottom: 4 };
-const inp = { width: "100%", padding: "10px 12px", border: "1px solid #cde1d7", borderRadius: 10, fontSize: 14, boxSizing: "border-box", background: "#fff" };
+const inp = { width: "100%", padding: "10px 12px", border: "1px solid #cde1d7", borderRadius: 10, fontSize: 14, boxSizing: "border-box", background: "rgba(255,255,255,0.98)", boxShadow: "0 2px 8px rgba(15,23,42,0.05)" };

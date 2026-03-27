@@ -84,26 +84,26 @@ export default function AdminDashboard() {
         <button onClick={logout} style={{ background: "rgba(255,255,255,0.15)", border: "none", color: "white", padding: "8px 16px", borderRadius: 8, cursor: "pointer" }}>Logout</button>
       </div>
 
-      <div style={{ background: "rgba(255,255,255,0.8)", borderBottom: "1px solid #e2e8f0", display: "flex", paddingLeft: 24, backdropFilter: "blur(8px)" }}>
+      <div style={{ background: "rgba(255,255,255,0.82)", borderBottom: "1px solid #dbe3ef", display: "flex", paddingLeft: 24, backdropFilter: "blur(10px)", position: "sticky", top: 0, zIndex: 10 }}>
         {TABS.map((t, i) => (
           <button key={t} onClick={() => setTab(i)} style={{ padding: "14px 20px", border: "none", background: "none", cursor: "pointer", borderBottom: tab === i ? "3px solid #4338ca" : "3px solid transparent", color: tab === i ? "#312e81" : "#64748b", fontWeight: tab === i ? 700 : 500, fontSize: 14 }}>{t}</button>
         ))}
       </div>
 
-      <div style={{ maxWidth: 1240, margin: "0 auto", padding: 24 }}>
+      <div style={{ maxWidth: 1320, margin: "0 auto", padding: 24 }}>
         {msg && <div style={{ background: msg.startsWith("✅") ? "#d1fae5" : "#fee2e2", color: msg.startsWith("✅") ? "#065f46" : "#991b1b", padding: "12px 16px", borderRadius: 8, marginBottom: 16 }}>{msg}<button onClick={() => setMsg("")} style={{ float: "right", border: "none", background: "none", cursor: "pointer" }}>×</button></div>}
 
         {tab === 0 && <>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: 16, marginBottom: 24 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(190px, 1fr))", gap: 16, marginBottom: 24 }}>
             {statCards.map(c => (
-              <div key={c.label} style={{ background: "rgba(255,255,255,0.9)", borderRadius: 16, padding: 20, boxShadow: "0 10px 24px rgba(15,23,42,0.08)", border: "1px solid #e2e8f0", borderLeft: `4px solid ${c.color}` }}>
+              <div key={c.label} style={{ background: "linear-gradient(180deg, rgba(255,255,255,0.96), rgba(248,250,252,0.95))", borderRadius: 18, padding: 20, boxShadow: "0 14px 30px rgba(15,23,42,0.1)", border: "1px solid #dbe3ef", borderLeft: `4px solid ${c.color}` }}>
                 <div style={{ fontSize: 28 }}>{c.icon}</div>
                 <div style={{ fontSize: 24, fontWeight: 700, color: c.color }}>{c.value}</div>
                 <div style={{ color: "#666", fontSize: 13 }}>{c.label}</div>
               </div>
             ))}
           </div>
-          <div style={{ background: "rgba(255,255,255,0.92)", borderRadius: 16, padding: 20, boxShadow: "0 10px 24px rgba(15,23,42,0.08)", border: "1px solid #e2e8f0" }}>
+          <div style={{ background: "rgba(255,255,255,0.95)", borderRadius: 18, padding: 20, boxShadow: "0 14px 30px rgba(15,23,42,0.1)", border: "1px solid #dbe3ef" }}>
             <h3 style={{ margin: "0 0 16px" }}>Recent Bookings</h3>
             <table style={{ width: "100%", borderCollapse: "collapse" }}>
               <thead><tr style={{ background: "#f9fafb" }}>
@@ -248,6 +248,6 @@ export default function AdminDashboard() {
   );
 }
 
-const selS = { padding: "9px 12px", border: "1px solid #d6deea", borderRadius: 10, fontSize: 14, background: "#fff" };
-const btnS = { padding: "10px 20px", background: "linear-gradient(135deg, #2563eb, #4f46e5)", color: "white", border: "none", borderRadius: 10, cursor: "pointer", fontWeight: 700, boxShadow: "0 8px 20px rgba(37,99,235,0.28)" };
-const td = { padding: "12px 16px", fontSize: 13, color: "#334155" };
+const selS = { padding: "10px 12px", border: "1px solid #d6deea", borderRadius: 10, fontSize: 14, background: "rgba(255,255,255,0.97)", boxShadow: "0 2px 8px rgba(15,23,42,0.05)" };
+const btnS = { padding: "10px 20px", background: "linear-gradient(135deg, #2563eb, #4f46e5)", color: "white", border: "none", borderRadius: 10, cursor: "pointer", fontWeight: 700, boxShadow: "0 10px 24px rgba(37,99,235,0.32)" };
+const td = { padding: "12px 16px", fontSize: 13, color: "#334155", borderTop: "1px solid #edf2f7" };

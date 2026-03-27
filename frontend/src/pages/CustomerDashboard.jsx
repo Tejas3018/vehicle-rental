@@ -188,9 +188,9 @@ export default function CustomerDashboard() {
   const statusColor = { booked: "#f59e0b", picked_up: "#3b82f6", returned: "#10b981", cancelled: "#ef4444" };
 
   return (
-    <div style={{ minHeight: "100vh", background: "#f5f7fa", fontFamily: "system-ui, sans-serif" }}>
+    <div style={{ minHeight: "100vh", background: "linear-gradient(180deg, #eef2ff 0%, #f8fafc 44%, #edf7ff 100%)", fontFamily: "Inter, system-ui, sans-serif" }}>
       {/* Header */}
-      <div style={{ background: "#0f3460", color: "white", padding: "16px 24px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+      <div style={{ background: "linear-gradient(120deg, #0b2447, #3c2a7a)", color: "white", padding: "16px 24px", display: "flex", justifyContent: "space-between", alignItems: "center", boxShadow: "0 10px 26px rgba(15,23,42,0.22)" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
           <span style={{ fontSize: 24 }}>🚗</span>
           <div>
@@ -202,17 +202,17 @@ export default function CustomerDashboard() {
       </div>
 
       {/* Tabs */}
-      <div style={{ background: "white", borderBottom: "1px solid #e5e7eb", display: "flex", paddingLeft: 24 }}>
+      <div style={{ background: "rgba(255,255,255,0.82)", borderBottom: "1px solid #dbe3ef", display: "flex", paddingLeft: 24, backdropFilter: "blur(10px)", position: "sticky", top: 0, zIndex: 10 }}>
         {TABS.map((t, i) => (
           <button key={t} onClick={() => setTab(i)} style={{
             padding: "14px 20px", border: "none", background: "none", cursor: "pointer",
-            borderBottom: tab === i ? "2px solid #0f3460" : "2px solid transparent",
-            color: tab === i ? "#0f3460" : "#666", fontWeight: tab === i ? 700 : 400, fontSize: 14
+            borderBottom: tab === i ? "3px solid #3730a3" : "3px solid transparent",
+            color: tab === i ? "#1e1b4b" : "#64748b", fontWeight: tab === i ? 700 : 500, fontSize: 14
           }}>{t}</button>
         ))}
       </div>
 
-      <div style={{ maxWidth: 1200, margin: "0 auto", padding: 24 }}>
+      <div style={{ maxWidth: 1280, margin: "0 auto", padding: 24 }}>
         {msg && <div style={{ background: msg.startsWith("✅") ? "#d1fae5" : "#fee2e2", color: msg.startsWith("✅") ? "#065f46" : "#991b1b", padding: "12px 16px", borderRadius: 8, marginBottom: 16 }}>{msg}<button onClick={() => setMsg("")} style={{ float: "right", border: "none", background: "none", cursor: "pointer" }}>×</button></div>}
 
         {/* BROWSE VEHICLES */}
@@ -367,6 +367,6 @@ export default function CustomerDashboard() {
   );
 }
 
-const selStyle = { padding: "8px 12px", border: "1px solid #ddd", borderRadius: 8, fontSize: 14, outline: "none" };
-const btnStyle = { padding: "10px 20px", background: "#0f3460", color: "white", border: "none", borderRadius: 8, cursor: "pointer", fontWeight: 600, fontSize: 14 };
-const btnSmall = { padding: "6px 12px", background: "#0f3460", color: "white", border: "none", borderRadius: 6, cursor: "pointer", fontSize: 13 };
+const selStyle = { padding: "9px 12px", border: "1px solid #d8e1ef", borderRadius: 10, fontSize: 14, outline: "none", background: "rgba(255,255,255,0.96)", boxShadow: "0 2px 8px rgba(15,23,42,0.04)" };
+const btnStyle = { padding: "10px 20px", background: "linear-gradient(135deg, #2563eb, #4f46e5)", color: "white", border: "none", borderRadius: 10, cursor: "pointer", fontWeight: 700, fontSize: 14, boxShadow: "0 8px 20px rgba(37,99,235,0.3)" };
+const btnSmall = { padding: "7px 12px", background: "linear-gradient(135deg, #1d4ed8, #4338ca)", color: "white", border: "none", borderRadius: 8, cursor: "pointer", fontSize: 13, fontWeight: 600 };
