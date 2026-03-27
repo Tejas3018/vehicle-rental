@@ -5,7 +5,7 @@ import AdminDashboard from "./pages/AdminDashboard";
 import FleetDashboard from "./pages/FleetDashboard";
 
 export const AuthContext = createContext(null);
-export const API_BASE = "http://localhost:8000";
+export const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
 
 export function useAuth() { return useContext(AuthContext); }
 
